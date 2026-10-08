@@ -1,0 +1,49 @@
+services:
+    mini_payment_app:
+        build:
+            context: .
+            # كدا docker هيستخدم Dockerfile الموجود في مجلد المشروع
+            dockerfile: docker/php/Dockerfile
+        container_name: mini_payment_app
+        image: mini_payment_app_image
+        volumes:
+            - .:/var/www/html
+            - ./vendor:/var/www/html/vendor
+            - ./node_modules:/var/www/html/node_modules
+            - ./storage:/var/www/html/storage
+        ports:
+            - "8000:80" # بيفتح Apache على بورت 8000
+        depends_on:
+            - mini_payment_db
+            - mini_payment_redis
+    mini_payment_db:
+        image: postgres:17
+        container_name: mini_payment_db
+        environment:
+            POSTGRES_DB: mini_payment
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: password
+        ports:
+            - "5432:5432"
+        volumes:
+            - mini_payment_db_data:/var/lib/postgresql/data
+    pgadmin:
+        image: dpage/pgadmin4
+        container_name: mini_payment_pgadmin
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@admin.com
+            PGADMIN_DEFAULT_PASSWORD: password
+        ports:
+            - "8080:80"
+        depends_on:
+            - mini_payment_db
+    mini_payment_redis:
+        image: redis:alpine
+        container_name: mini_payment_redis
+        volumes:
+            - mini_payment_redis_data:/data
+        # restart: always
+
+volumes:
+    mini_payment_db_data:
+    mini_payment_redis_data:
