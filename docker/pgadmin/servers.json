@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Mini Payment DB",
+      "Group": "Servers",
+      "Host": "mini_payment_db",
+      "Port": 5432,
+      "MaintenanceDB": "mini_payment",
+      "Username": "root",
+      "PasswordExec": "password",
+      "SSLMode": "prefer"
+    }
+  }
+}

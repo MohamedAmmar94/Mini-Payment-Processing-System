@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Auth\LoginController;
+use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\ReactAuth\AuthController;
 use App\Http\Controllers\TapWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+Route::group(['prefix' => 'v1'], function () {
+    Route::post("login", [LoginController::class, "login"]);
+    Route::post("register", [RegisterController::class, "register"]);
+});
 Route::group(['prefix' => 'v1'], function () {
     Route::get("customers", [CustomerController::class, "index"]);
     Route::get("customers/{id}", [CustomerController::class, "show"]);
@@ -37,3 +44,16 @@ Route::group(['prefix' => 'v1'], function () {
 
 });
 Route::any('webhooks/tap', [TapWebhookController::class, 'handle']);
+Route::prefix('react-auth')->name('react-auth.')->group(function () {
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('guest:web')
+        ->name('login');
+
+    Route::middleware('auth:web')->group(function () {
+        Route::get('/me', [AuthController::class, 'me'])
+            ->name('me');
+
+        Route::post('/logout', [AuthController::class, 'logout'])
+            ->name('logout');
+    });
+});

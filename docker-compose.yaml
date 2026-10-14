@@ -33,6 +33,11 @@ services:
         environment:
             PGADMIN_DEFAULT_EMAIL: admin@admin.com
             PGADMIN_DEFAULT_PASSWORD: password
+            PGADMIN_CONFIG_SERVER_MODE: "False"
+            PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+        volumes:
+            - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+            - pgadmin_data:/var/lib/pgadmin
         ports:
             - "8080:80"
         depends_on:
@@ -47,3 +52,4 @@ services:
 volumes:
     mini_payment_db_data:
     mini_payment_redis_data:
+    pgadmin_data:
