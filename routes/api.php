@@ -3,8 +3,10 @@
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PaymentWebhookEventController;
 use App\Http\Controllers\ReactAuth\AuthController;
 use App\Http\Controllers\TapWebhookController;
 use Illuminate\Http\Request;
@@ -17,7 +19,7 @@ Route::group(['prefix' => 'v1'], function () {
     Route::post("login", [LoginController::class, "login"]);
     Route::post("register", [RegisterController::class, "register"]);
 });
-Route::group(['prefix' => 'v1'], function () {
+Route::group(['prefix' => 'v1', 'middleware' => ['auth:sanctum']], function () {
     Route::get("customers", [CustomerController::class, "index"]);
     Route::get("customers/{id}", [CustomerController::class, "show"]);
     Route::post("customers", [CustomerController::class, "store"]);
@@ -37,11 +39,13 @@ Route::group(['prefix' => 'v1'], function () {
     Route::post("payments/{id}", [PaymentController::class, "update"]);
     Route::delete("payments/{id}", [PaymentController::class, "destroy"]);
 
+    Route::get("payment-webhook-events", [PaymentWebhookEventController::class, "index"]);
+
     Route::post(
         'invoices/{invoice}/payments',
         [PaymentController::class, 'store']
     );
-
+    Route::get('dashboard/summary', [DashboardController::class, 'summary']);
 });
 Route::any('webhooks/tap', [TapWebhookController::class, 'handle']);
 Route::prefix('react-auth')->name('react-auth.')->group(function () {

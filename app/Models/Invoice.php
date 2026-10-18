@@ -13,6 +13,9 @@ class Invoice extends Model {
         'created_at',
         'updated_at',
     ];
+    protected $hidden = [
+        'id',
+    ];
     protected $casts = [
         'issue_date'      => 'date',
         'due_date'        => 'date',

@@ -3,6 +3,7 @@ namespace App\Services;
 use App\Models\Invoice;
 use DB;
 use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables;
 
 class InvoiceService {
     /**
@@ -10,6 +11,58 @@ class InvoiceService {
      */
     public function __construct() {
         //
+    }
+    public function datatables($filters) {
+        $query = Invoice::query()
+            ->with('customer:id,name')
+            ->orderByDesc('invoices.created_at')
+            ->orderByDesc('invoices.id');
+
+        return DataTables::eloquent($query)
+            ->filter(function ($query) use ($filters) {
+                if (! empty($filters['search_term'])) {
+                    $term = $filters['search_term'];
+
+                    $query->where(function ($q) use ($term) {
+                        $q->where(
+                            'invoices.invoice_number',
+                            'ILIKE',
+                            "%{$term}%"
+                        )->orWhereHas('customer', function ($customerQuery) use ($term) {
+                            $customerQuery->where(
+                                'name',
+                                'ILIKE',
+                                "%{$term}%"
+                            );
+                        });
+                    });
+                }
+
+                if (! empty($filters['status'])) {
+                    $query->where(
+                        'invoices.status',
+                        $filters['status']
+                    );
+                }
+
+                if (! empty($filters['from'])) {
+                    $query->where(
+                        'invoices.issue_date',
+                        '>=',
+                        $filters['from']
+                    );
+                }
+
+                if (! empty($filters['to'])) {
+                    $query->where(
+                        'invoices.issue_date',
+                        '<=',
+                        $filters['to']
+                    );
+                }
+            })
+
+            ->toJson();
     }
     public function create(array $data): Invoice {
         return DB::transaction(function () use ($data) {

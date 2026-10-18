@@ -6,6 +6,7 @@ use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Yajra\DataTables\Facades\DataTables;
 
 class PaymentService {
     /**
@@ -14,6 +15,63 @@ class PaymentService {
     public function __construct(
         private PaymentGatewayInterface $gateway
     ) {
+    }
+    public function datatables($filters) {
+        $query = Payment::query()
+            ->with('invoice:id,invoice_number,customer_id', 'invoice.customer:id,name')
+            ->orderByDesc('payments.created_at')
+            ->orderByDesc('payments.id');
+        return DataTables::eloquent($query)
+            ->filter(function ($query) use ($filters) {
+                if (! empty($filters['search_term'])) {
+                    $term = $filters['search_term'];
+                    $query->where(function ($q) use ($term) {
+                        $q->where(
+                            'provider_transaction_id',
+                            'ILIKE',
+                            "%{$term}%"
+                        )->orWhereHas('invoice', function ($invoiceQuery) use ($term) {
+                            $invoiceQuery->where(function ($q) use ($term) {
+                                $q->where(
+                                    'invoices.invoice_number',
+                                    'ILIKE',
+                                    "%{$term}%"
+                                );
+                            })->orWhereHas('customer', function ($customerQuery) use ($term) {
+                                $customerQuery->where(
+                                    'customers.name',
+                                    'ILIKE',
+                                    "%{$term}%"
+                                );
+                            });
+                        });
+                    });
+                }
+                if (! empty($filters['status'])) {
+                    $query->where(
+                        'payments.status',
+                        $filters['status']
+                    );
+                }
+
+                if (! empty($filters['from'])) {
+                    $query->where(
+                        'payments.created_at',
+                        '>=',
+                        $filters['from']
+                    );
+                }
+
+                if (! empty($filters['to'])) {
+                    $query->where(
+                        'payments.created_at',
+                        '<',
+                        $filters['to']
+                    );
+                }
+            })
+            ->toJson();
+
     }
     public function createPayment(
         Invoice $invoice,
